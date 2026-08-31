@@ -1,7 +1,7 @@
 package health
 
 import (
-	healthhandler "user-service/handler/health"
+	healthhandler "user-service/internal/handler/health"
 
 	"github.com/gin-gonic/gin"
 )

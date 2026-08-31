@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"user-service/handler"
-	healthroutes "user-service/routes/health"
+	"user-service/internal/handler"
+	healthroutes "user-service/internal/routes/health"
 
 	"github.com/gin-gonic/gin"
 )

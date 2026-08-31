@@ -1,6 +1,8 @@
 package handler
 
-import healthhandler "user-service/handler/health"
+import (
+	healthhandler "user-service/internal/handler/health"
+)
 
 type Registry struct {
 	Health *healthhandler.Handler

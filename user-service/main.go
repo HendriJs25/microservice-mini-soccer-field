@@ -4,10 +4,10 @@ import (
 	"log/slog"
 	"os"
 	"time"
-	"user-service/config"
-	"user-service/database"
-	"user-service/handler"
-	"user-service/routes"
+	"user-service/internal/config"
+	"user-service/internal/database"
+	"user-service/internal/handler"
+	"user-service/internal/routes"
 
 	"github.com/gin-gonic/gin"
 )

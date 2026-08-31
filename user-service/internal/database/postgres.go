@@ -7,7 +7,7 @@ import (
 	"net"
 	"net/url"
 	"time"
-	"user-service/config"
+	"user-service/internal/config"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -21,7 +21,7 @@ type Postgres struct {
 }
 
 func NewPostgres(cfg config.Database) (*Postgres, error) {
-	gormDB, err := gorm.Open(postgres.Open(buildPostgresURL(cfg)),
+	gormDB, err := gorm.Open(postgres.Open(BuildPostgresURL(cfg)),
 		&gorm.Config{
 			DisableAutomaticPing: true,
 			TranslateError:       true,
@@ -58,7 +58,7 @@ func (p *Postgres) Close() error {
 	return p.sqlDB.Close()
 }
 
-func buildPostgresURL(cfg config.Database) string {
+func BuildPostgresURL(cfg config.Database) string {
 	connectionURL := &url.URL{
 		Scheme: "postgres",
 		User: url.UserPassword(
