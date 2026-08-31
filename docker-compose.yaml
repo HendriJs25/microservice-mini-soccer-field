@@ -1,0 +1,45 @@
+name: mini-soccer-field
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: soccer-postgres
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    networks:
+      - soccer-network
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+
+    container_name: user-service
+
+    env_file:
+      - ./user-service/.env
+
+    ports:
+      - "8001:8001"
+
+    depends_on:
+      - postgres
+
+    networks:
+      - soccer-network
+
+networks:
+  soccer-network:
+
+volumes:
+  postgres-data:
+  
