@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"user-service/internal/config"
 	"user-service/internal/domain/model"
-	"uuid"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
