@@ -16,7 +16,8 @@ func Execute() error {
 func registerCommands() {
 	rootCmd.AddCommand(
 		serveCmd,
-		migrateCmd)
+		migrateCmd,
+		seedCmd)
 
 	migrateCmd.AddCommand(
 		migrateUpCmd,

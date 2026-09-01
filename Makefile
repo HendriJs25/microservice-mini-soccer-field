@@ -11,6 +11,7 @@ setup: check-service
 	docker compose build $(SERVICE)
 	docker compose up -d postgres
 	docker compose run --rm $(SERVICE) migrate up
+	docker compose run --rm $(SERVICE) seed
 	docker compose up -d $(SERVICE)
 
 deploy: check-service

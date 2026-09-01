@@ -8,7 +8,7 @@ CREATE TABLE verification_tokens (
     updated_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ,
 
-    CONSTRAINT fk_verification_tokens_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_verification_tokens_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     CONSTRAINT uq_verification_tokens_token UNIQUE (token)
 );
 

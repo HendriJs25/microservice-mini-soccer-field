@@ -3,6 +3,7 @@ package config
 type Config struct {
 	App      App
 	Database Database
+	Seed     Seed
 }
 
 func Load() (*Config, error) {
@@ -13,6 +14,7 @@ func Load() (*Config, error) {
 	return &Config{
 		App:      loadApp(),
 		Database: database,
+		Seed:     loadSeed(),
 	}, nil
 }
 
