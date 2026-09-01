@@ -14,7 +14,7 @@ CREATE TABLE users (
 
     CONSTRAINT uq_users_uuid UNIQUE (uuid),
     CONSTRAINT uq_users_email UNIQUE (email),
-    CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles(id)
+    CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE RESTRICT
 );
 
 CREATE INDEX idx_users_role_id ON users(role_id);

@@ -1,27 +1,28 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
+	"time"
 	"user-service/internal/config"
 	"user-service/internal/database"
-	"user-service/internal/handler"
-	"user-service/internal/routes"
+	"user-service/internal/database/seeders"
 
-	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 )
 
-var serveCmd = &cobra.Command{
-	Use:   "serve",
-	Short: "Start HTTP server",
+const seedTimeout = 30 * time.Second
 
+var seedCmd = &cobra.Command{
+	Use:   "seed",
+	Short: "Run seeders",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runServer()
+		return runSeeder()
 	},
 }
 
-func runServer() error {
+func runSeeder() error {
 	cfg, err := config.Load()
 	if err != nil {
 		return fmt.Errorf("loading config failed: %w", err)
@@ -40,15 +41,18 @@ func runServer() error {
 
 	slog.Info("postgres connection established", "host", cfg.Database.Host, "port", cfg.Database.Port, "name", cfg.Database.Name)
 
-	handlerRegistry := handler.NewRegistry()
-
-	router := gin.Default()
-	group := router.Group("api/v1")
-	routeRegistry := routes.NewRegistry(group, handlerRegistry)
-	routeRegistry.Register()
-
-	if err := router.Run(cfg.ServerAddress()); err != nil {
-		return fmt.Errorf("starting server failed: %w", err)
+	if err := cfg.Seed.Validate(); err != nil {
+		return fmt.Errorf("validate seed configuration: %w", err)
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), seedTimeout)
+	defer cancel()
+
+	if err := seeders.Run(ctx, postgresDB.DB, cfg.Seed); err != nil {
+		return err
+	}
+
+	slog.Info("seed initialized successfully")
+
 	return nil
 }
