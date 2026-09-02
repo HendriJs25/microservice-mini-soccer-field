@@ -17,6 +17,7 @@ var ErrValidator = map[string]string{
 	"required": "%s is required",
 	"email":    "%s is not a valid email",
 	"eqfield":  "%s is not equal to %s",
+	"notblank": "%s is blank",
 }
 
 func ErrValidationResponse(err error) (validationResponse []ValidationResponse) {

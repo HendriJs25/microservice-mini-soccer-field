@@ -9,7 +9,8 @@ var (
 	ErrForbidden           = errors.New("forbidden")
 	ErrInvalidArgument     = errors.New("invalid argument")
 	ErrBadRequest          = errors.New("bad request")
-	ErrAlreadyExists       = errors.New("resource already exists")
+	ErrNotFound            = errors.New("not found")
+	ErrAlreadyExists       = errors.New("user already exists")
 	ErrAccountNotVerified  = errors.New("account not verified")
 
 	ErrInvalidToken = errors.New("invalid token")
@@ -23,6 +24,7 @@ var GeneralErrors = []error{
 	ErrForbidden,
 	ErrInvalidArgument,
 	ErrBadRequest,
+	ErrNotFound,
 	ErrAlreadyExists,
 	ErrAccountNotVerified,
 	ErrInvalidToken,

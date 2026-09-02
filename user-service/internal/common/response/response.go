@@ -36,7 +36,7 @@ func HTTPResponse(param ParamHTTPResponse) {
 	message := errConstant.ErrInternalServerError.Error()
 	if param.Message != nil {
 		message = *param.Message
-	} else if param.Err != nil {
+	} else if errConstant.ErrMapping(param.Err) {
 		message = param.Err.Error()
 	}
 
