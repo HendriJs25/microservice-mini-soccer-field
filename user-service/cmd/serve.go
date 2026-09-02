@@ -3,10 +3,13 @@ package cmd
 import (
 	"fmt"
 	"log/slog"
+	"user-service/internal/common/validator"
 	"user-service/internal/config"
 	"user-service/internal/database"
 	"user-service/internal/handler"
+	"user-service/internal/repository"
 	"user-service/internal/routes"
+	"user-service/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
@@ -40,12 +43,19 @@ func runServer() error {
 
 	slog.Info("postgres connection established", "host", cfg.Database.Host, "port", cfg.Database.Port, "name", cfg.Database.Name)
 
-	handlerRegistry := handler.NewRegistry()
+	repositoryRegistry := repository.NewRegistry(postgresDB.DB)
+	serviceRegistry := services.NewRegistry(repositoryRegistry)
+	v := validator.New()
+	handlerRegistry := handler.NewRegistry(serviceRegistry, v)
 
 	router := gin.Default()
 	group := router.Group("api/v1")
 	routeRegistry := routes.NewRegistry(group, handlerRegistry)
 	routeRegistry.Register()
+
+	slog.Info("starting user-service",
+		"environment", cfg.App.Env,
+		"address", cfg.ServerAddress())
 
 	if err := router.Run(cfg.ServerAddress()); err != nil {
 		return fmt.Errorf("starting server failed: %w", err)
