@@ -17,6 +17,7 @@ type repository struct {
 type Repository interface {
 	Create(context.Context, *model.User) error
 	ExistByEmail(context.Context, string) (bool, error)
+	MarkVerified(context.Context, int64) error
 }
 
 func NewRepository(db *gorm.DB) Repository {
@@ -41,4 +42,18 @@ func (r *repository) ExistByEmail(ctx context.Context, email string) (bool, erro
 		return false, fmt.Errorf("is user exist: %w", err)
 	}
 	return count > 0, nil
+}
+
+func (r *repository) MarkVerified(ctx context.Context, id int64) error {
+	result := r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", id).Update("is_verified", true)
+
+	if result.Error != nil {
+		return fmt.Errorf("mark verified user: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return errConstant.ErrNotFound
+	}
+
+	return nil
 }

@@ -2,7 +2,9 @@ package user
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
+	"strings"
 	errWrap "user-service/internal/common/error"
 	"user-service/internal/common/response"
 	errConstant "user-service/internal/constants/error"
@@ -63,7 +65,7 @@ func (h *Handler) Register(c *gin.Context) {
 			})
 			return
 		}
-
+		slog.Error("register user failed", "email", req.Email, "error", err)
 		response.HTTPResponse(response.ParamHTTPResponse{
 			Code: http.StatusInternalServerError,
 			Err:  err,
@@ -73,7 +75,52 @@ func (h *Handler) Register(c *gin.Context) {
 	}
 
 	response.HTTPResponse(response.ParamHTTPResponse{
-		Code: http.StatusCreated,
-		Gin:  c,
+		Code:    http.StatusCreated,
+		Message: new("Register success"),
+		Gin:     c,
+	})
+}
+
+func (h *Handler) VerifyAccount(c *gin.Context) {
+	token := strings.TrimSpace(c.Param("token"))
+	if token == "" {
+		response.HTTPResponse(response.ParamHTTPResponse{
+			Code: http.StatusBadRequest,
+			Err:  errConstant.ErrBadRequest,
+			Gin:  c,
+		})
+		return
+	}
+
+	if err := h.userService.VerifyAccount(c.Request.Context(), token); err != nil {
+		switch {
+		case errors.Is(err, errConstant.ErrInvalidToken):
+			response.HTTPResponse(response.ParamHTTPResponse{
+				Code: http.StatusBadRequest,
+				Err:  err,
+				Gin:  c,
+			})
+			return
+		case errors.Is(err, errConstant.ErrNotFound):
+			response.HTTPResponse(response.ParamHTTPResponse{
+				Code: http.StatusNotFound,
+				Err:  err,
+				Gin:  c,
+			})
+			return
+		default:
+			slog.Error("verify account failed", "token", token, "error", err)
+			response.HTTPResponse(response.ParamHTTPResponse{
+				Code: http.StatusInternalServerError,
+				Err:  err,
+				Gin:  c,
+			})
+			return
+		}
+	}
+	response.HTTPResponse(response.ParamHTTPResponse{
+		Code:    http.StatusOK,
+		Message: new("Verify account successfully"),
+		Gin:     c,
 	})
 }

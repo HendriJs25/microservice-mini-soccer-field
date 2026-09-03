@@ -8,4 +8,5 @@ import (
 
 func Register(router *gin.RouterGroup, handler *userhandler.Handler) {
 	router.POST("/register", handler.Register)
+	router.GET("/verify-account/:token", handler.VerifyAccount)
 }
