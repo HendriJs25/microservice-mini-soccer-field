@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 	"user-service/internal/constants"
 	errConstant "user-service/internal/constants/error"
@@ -10,26 +11,30 @@ import (
 	"user-service/internal/repository"
 	"user-service/internal/repository/role"
 	"user-service/internal/repository/user"
+	"user-service/internal/repository/verificationtoken"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type service struct {
-	userRepository     user.Repository
-	roleRepository     role.Repository
-	transactionManager repository.TransactionManager
+	userRepository              user.Repository
+	roleRepository              role.Repository
+	verificationTokenRepository verificationtoken.Repository
+	transactionManager          repository.TransactionManager
 }
 
 type Service interface {
 	Register(context.Context, CreateInput) error
+	VerifyAccount(context.Context, string) error
 }
 
-func NewService(userRepository user.Repository, roleRepository role.Repository, transactionManager repository.TransactionManager) Service {
+func NewService(userRepository user.Repository, roleRepository role.Repository, verificationTokenRepository verificationtoken.Repository, transactionManager repository.TransactionManager) Service {
 	return &service{
-		userRepository:     userRepository,
-		roleRepository:     roleRepository,
-		transactionManager: transactionManager,
+		userRepository:              userRepository,
+		roleRepository:              roleRepository,
+		verificationTokenRepository: verificationTokenRepository,
+		transactionManager:          transactionManager,
 	}
 }
 
@@ -91,5 +96,43 @@ func (s *service) Register(ctx context.Context, input CreateInput) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (s *service) VerifyAccount(ctx context.Context, token string) error {
+	hashToken := hashToken(token)
+
+	verifyToken, err := s.verificationTokenRepository.FindByHashToken(ctx, hashToken)
+	if err != nil {
+		return err
+	}
+
+	if verifyToken.TokenType != constants.TokenTypeEmailVerification {
+		slog.Error("invalid token type", "error", err, "hashToken", hashToken)
+		return errConstant.ErrInvalidToken
+	}
+
+	now := time.Now().UTC()
+
+	if !now.Before(verifyToken.ExpiresAt) {
+		slog.Error("invalid token expired", "error", err, "hashToken", hashToken)
+		return errConstant.ErrInvalidToken
+	}
+
+	err = s.transactionManager.WithinTransaction(ctx, func(repositories *repository.Registry) error {
+		if err := repositories.User.MarkVerified(ctx, verifyToken.UserID); err != nil {
+			return err
+		}
+
+		if err := repositories.VerificationToken.Delete(ctx, hashToken); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
