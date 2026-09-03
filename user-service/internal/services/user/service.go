@@ -27,6 +27,7 @@ type service struct {
 type Service interface {
 	Register(context.Context, CreateInput) error
 	VerifyAccount(context.Context, string) error
+	Authenticate(context.Context, AuthenticateInput) (*AuthenticatedUser, error)
 }
 
 func NewService(userRepository user.Repository, roleRepository role.Repository, verificationTokenRepository verificationtoken.Repository, transactionManager repository.TransactionManager) Service {
@@ -39,7 +40,9 @@ func NewService(userRepository user.Repository, roleRepository role.Repository, 
 }
 
 func (s *service) Register(ctx context.Context, input CreateInput) error {
-	exist, err := s.userRepository.ExistByEmail(ctx, input.Email)
+	email := normalizeEmail(input.Email)
+
+	exist, err := s.userRepository.ExistByEmail(ctx, email)
 	if err != nil {
 		return err
 	}
@@ -74,7 +77,7 @@ func (s *service) Register(ctx context.Context, input CreateInput) error {
 			Name:         input.Name,
 			Username:     input.Username,
 			PasswordHash: string(passwordHash),
-			Email:        input.Email,
+			Email:        email,
 			RoleID:       customerRole.ID,
 		}
 
@@ -135,4 +138,27 @@ func (s *service) VerifyAccount(ctx context.Context, token string) error {
 	}
 
 	return nil
+}
+
+func (s *service) Authenticate(ctx context.Context, input AuthenticateInput) (*AuthenticatedUser, error) {
+	email := normalizeEmail(input.Email)
+	user, err := s.userRepository.FindByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(input.Password))
+	if err != nil {
+		return nil, errConstant.ErrPasswordNotMatch
+	}
+
+	if !user.IsVerified {
+		return nil, errConstant.ErrAccountNotVerified
+	}
+
+	return &AuthenticatedUser{
+		UUID:     user.UUID,
+		Name:     user.Name,
+		Username: user.Username,
+		Email:    user.Email,
+	}, nil
 }

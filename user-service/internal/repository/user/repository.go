@@ -16,6 +16,7 @@ type repository struct {
 
 type Repository interface {
 	Create(context.Context, *model.User) error
+	FindByEmail(context.Context, string) (*model.User, error)
 	ExistByEmail(context.Context, string) (bool, error)
 	MarkVerified(context.Context, int64) error
 }
@@ -34,6 +35,18 @@ func (r *repository) Create(ctx context.Context, user *model.User) error {
 		return fmt.Errorf("create user: %w", err)
 	}
 	return nil
+}
+
+func (r *repository) FindByEmail(ctx context.Context, email string) (*model.User, error) {
+	var user model.User
+
+	if err := r.db.WithContext(ctx).Preload("role").Where("email = ?", email).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errConstant.ErrNotFound
+		}
+		return nil, fmt.Errorf("find user by email: %w", err)
+	}
+	return &user, nil
 }
 
 func (r *repository) ExistByEmail(ctx context.Context, email string) (bool, error) {
